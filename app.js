@@ -266,26 +266,29 @@ Rules: Under 160 words. Use code blocks. Be direct. End with one question.`;
   }
 
   async function call(messages, topicLabel, depth) {
-    if (!hasKey()) throw new Error('NO_KEY');
-
     const engScore = STDPEngine.getScore();
     const systemText = buildSystem(topicLabel, depth, engScore);
 
-    // Format conversation directly for standard ChatCompletion standard
     const formattedMessages = [
       { role: 'system', content: systemText },
       ...messages.map(m => ({ role: m.role, content: m.content }))
     ];
 
-    // Using a rock-solid, ultra-fast Llama model hosted by Groq
-    const url = 'https://api.groq.com/openai/v1/chat/completions';
+    // ⚡ CHOOSE ROUTE: Use local storage key if testing locally, otherwise use Vercel's backend proxy
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    const url = isLocal 
+      ? 'https://api.groq.com/openai/v1/chat/completions' 
+      : '/api/tutor'; // Production path for judges
+
+    const headers = { 'Content-Type': 'application/json' };
+    if (isLocal) {
+      headers['Authorization'] = `Bearer ${apiKey || localStorage.getItem('NL_GROQ_KEY')}`;
+    }
 
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
+      headers: headers,
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: formattedMessages.slice(-12),
@@ -302,7 +305,6 @@ Rules: Under 160 words. Use code blocks. Be direct. End with one question.`;
     const data = await res.json();
     return data?.choices?.[0]?.message?.content ?? 'No response received.';
   }
-
   return { setKey, hasKey, call };
 })();
 /* ── 5. UI HELPERS ── */
