@@ -546,5 +546,5 @@ const App = (() => {
   function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
 
   document.addEventListener('DOMContentLoaded', init);
-  return { sendMessage, sendSignal, onDepthChange, toggleCamera, handleKey, autoResize, goHome };
+  return { sendMessage, sendSignal, onDepthChange, toggleCamera, handleKey, autoResize, goHome, enterApp };
 })();
