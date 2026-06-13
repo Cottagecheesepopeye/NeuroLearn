@@ -1,15 +1,6 @@
-/**
- * ============================================================
- * NeuroLearn — app.js
- * Adaptive Learning, Wired Like Your Brain.
- * ============================================================
- */
-
 'use strict';
 
-/* ════════════════════════════════════════════════════════════
-   1. NEURAL CANVAS (Background Animation)
-════════════════════════════════════════════════════════════ */
+/* ── 1. NEURAL CANVAS (Background Animation) ── */
 const NeuralCanvas = (() => {
   let canvas, ctx, nodes, raf;
   const NODE_COUNT = 55;
@@ -86,9 +77,7 @@ const NeuralCanvas = (() => {
 })();
 
 
-/* ════════════════════════════════════════════════════════════
-   2. STDP ENGINE (Neuromorphic Core)
-════════════════════════════════════════════════════════════ */
+/* ── 2. STDP ENGINE (Neuromorphic Logic) ── */
 const STDPEngine = (() => {
   const EXCITATORY  = 'excitatory';
   const INHIBITORY  = 'inhibitory';
@@ -146,13 +135,10 @@ const STDPEngine = (() => {
   return { fire, onUpdate, startDecay, stopDecay, getScore, EXCITATORY, INHIBITORY };
 })();
 
-
-/* ════════════════════════════════════════════════════════════
-   3. FACE ENGINE (Emotion Detection)
-════════════════════════════════════════════════════════════ */
+/* ── 3. FACE ENGINE (Emotion Detection) ── */
 const FaceEngine = (() => {
   const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-  const POLL_MS   = 2500;
+  const POLL_MS   = 2500; // Balanced timer
 
   let video;
   let isRunning    = false;
@@ -191,6 +177,7 @@ const FaceEngine = (() => {
       await new Promise(res => { 
         video.onloadedmetadata = () => { 
           video.play(); 
+          // CRITICAL FIX: Explicitly set dimensions so the AI can map the face
           video.width = video.videoWidth;
           video.height = video.videoHeight;
           res(); 
@@ -226,6 +213,7 @@ const FaceEngine = (() => {
     }
 
     try {
+      // CRITICAL FIX: Increased inputSize to 224 so the AI isn't blind
       const result = await faceapi
         .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224 }))
         .withFaceExpressions();
@@ -242,25 +230,18 @@ const FaceEngine = (() => {
         if (onExpressionCb) onExpressionCb({ expression: dominant, spikeType, intensity });
       }
     } catch (e) { 
-      // Silently catch so loop doesn't crash
+      // Silently catch errors so the loop doesn't crash
     }
     
+    // Queue the next frame ONLY after this one is entirely finished
     scheduleNextPoll();
   }
 
   return { start, stop, onExpression };
 })();
-
-
-/* ════════════════════════════════════════════════════════════
-   4. TUTOR API (Powered by Google Gemini REST)
-════════════════════════════════════════════════════════════ */
+/* ── 4. TUTOR API (Gemini Integration) ── */
 const TutorAPI = (() => {
-  // PASTE YOUR NEW AIza KEY RIGHT HERE 
-  let apiKey = 'AIzaSyBZfP-iUUfDrUpTOZfR0XLQtjNe-teal7o';
-
-  function setKey(k) { apiKey = k; }
-  function hasKey()  { return apiKey.startsWith('AIza') && apiKey.length > 30; } 
+  let apiKey = 'AQ.Ab8RN6JVEDHpvV7rRS1TNOhdXqBNXmmKkf30mYW6kFHmHxaKmA';
 
   function buildSystem(topicLabel, depth, engScore) {
     const engNote =
@@ -270,17 +251,13 @@ const TutorAPI = (() => {
       'Student is actively learning — match current depth.';
 
     return `You are NeuroLearn, an AI tutor for CSE students.
-Topic: ${topicLabel}. Depth: ${depth}. Engagement: ${engScore}/100.
-${engNote}
+Topic: ${topicLabel}. Depth: ${depth}. Engagement: ${engScore}/100. ${engNote}
 Rules: Under 160 words. Use code blocks. Be direct. End with one question.`;
   }
 
   async function call(messages, topicLabel, depth) {
-    if (!hasKey()) throw new Error('NO_KEY');
-
     const engScore = STDPEngine.getScore();
     const systemText = buildSystem(topicLabel, depth, engScore);
-
     const geminiMessages = messages.map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }]
@@ -298,22 +275,16 @@ Rules: Under 160 words. Use code blocks. Be direct. End with one question.`;
       }),
     });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error?.message || `HTTP ${res.status}`);
-    }
-
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No response received.';
   }
 
-  return { setKey, hasKey, call };
+  return { call };
 })();
 
 
-/* ════════════════════════════════════════════════════════════
-   5. UI HELPERS
-════════════════════════════════════════════════════════════ */
+/* ── 5. UI HELPERS ── */
 const UI = (() => {
   let msgId = 0, toastTimer;
 
@@ -395,9 +366,7 @@ const UI = (() => {
 })();
 
 
-/* ════════════════════════════════════════════════════════════
-   6. TOPIC LIST & PROMPTS
-════════════════════════════════════════════════════════════ */
+/* ── 6. DATA CONTEXT ── */
 const TOPICS = [
   { id: 'dsa', label: 'Data Structures & Algos', icon: '🌳' }, { id: 'os', label: 'Operating Systems', icon: '⚙️' },
   { id: 'dbms', label: 'DBMS & SQL', icon: '🗄️' }, { id: 'cn', label: 'Computer Networks', icon: '🌐' },
@@ -418,9 +387,7 @@ const SIGNAL_PROMPTS = {
 };
 
 
-/* ════════════════════════════════════════════════════════════
-   7. APP CONTROLLER
-════════════════════════════════════════════════════════════ */
+/* ── 7. APP CONTROLLER ── */
 const App = (() => {
   let currentTopic = null, convHistory = [], isLoading = false, cameraActive = false;
 
@@ -443,8 +410,7 @@ const App = (() => {
       }
     });
 
-    const enterBtn = document.getElementById('enterBtn');
-    if(enterBtn) enterBtn.addEventListener('click', enterApp);
+    document.getElementById('enterBtn').addEventListener('click', enterApp);
   }
 
   function enterApp() {
@@ -467,7 +433,6 @@ const App = (() => {
 
   function buildTopicList() {
     const list = document.getElementById('topicList');
-    if(!list) return;
     TOPICS.forEach(topic => {
       const btn = document.createElement('button');
       btn.className = 'topic-btn';
@@ -533,11 +498,7 @@ const App = (() => {
       convHistory.push({ role: 'assistant', content: reply });
       STDPEngine.fire(0.55, STDPEngine.EXCITATORY);
     } catch (e) {
-      if (e.message.includes('401') || e.message === 'NO_KEY') {
-        UI.updateBubble(loadId, '⚠️ Invalid or missing API key. Please check your app.js file and ensure you are using an AIza key.');
-      } else {
-        UI.updateBubble(loadId, `⚠️ Error: ${e.message}`);
-      }
+      UI.updateBubble(loadId, `⚠️ Error: ${e.message}`);
     }
     isLoading = false;
     document.getElementById('sendBtn').disabled = false;
@@ -557,4 +518,28 @@ const App = (() => {
       FaceEngine.stop();
       cameraActive = false;
       panel.style.display = 'none';
-      dot.className = '
+      dot.className = 'emotion-dot';
+      label.textContent = 'camera off';
+    } else {
+      dot.className = 'emotion-dot detecting';
+      label.textContent = 'starting…';
+      const ok = await FaceEngine.start();
+      if (ok) {
+        cameraActive = true;
+        panel.style.display = 'block';
+        dot.className = 'emotion-dot active';
+        label.textContent = 'detecting';
+        UI.toast('Emotion detection active');
+      } else {
+        dot.className = 'emotion-dot';
+        label.textContent = 'unavailable';
+      }
+    }
+  }
+
+  function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+  function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+
+  document.addEventListener('DOMContentLoaded', init);
+  return { sendMessage, sendSignal, onDepthChange, toggleCamera, handleKey, autoResize, goHome };
+})();
