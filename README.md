@@ -101,7 +101,7 @@ NeuroLearn encourages continuous improvement by helping learners identify areas 
 
 ### File Description
 
-* **neuro.html** – Main structure and layout of the application.
+* **index.html** – Main structure and layout of the application.
 * **styles.css** – Styling, visual design, and animations.
 * **app.js** – Application logic and user interactions.
 
