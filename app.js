@@ -231,49 +231,71 @@ const FaceEngine = (() => {
 
 /* ── 4. TUTOR API (Gemini Integration) ── */
 const TutorAPI = (() => {
-  let apiKey = 'AQ.Ab8RN6LZEysafXuWxEXVPMul0jl5TPIDJW5QPchfs8DPAoyIhA';
+  // Your exact Google AI Studio key
+  let apiKey = 'AQ.Ab8RN6LZJtmEvYMCcQrpD-C9E5cKgneSQputxaM-VjqVZvvyxg';
+
+  function setKey(k) { apiKey = k; }
+  function hasKey()  { return apiKey.length > 20; } 
 
   function buildSystem(topicLabel, depth, engScore) {
     const engNote =
-      engScore < 20 ? 'Student seems disengaged — be energetic, use a hook.' :
-      engScore < 45 ? 'Student has low engagement — keep it concise.' :
-      engScore > 70 ? 'Student is highly engaged — go technically deeper.' :
+      engScore < 20 ? 'Student seems disengaged — be more energetic, use a surprising hook or analogy.' :
+      engScore < 45 ? 'Student has low engagement — keep it concise, use relatable examples.' :
+      engScore > 70 ? 'Student is highly engaged — go technically deeper, assume comfort with concepts.' :
       'Student is actively learning — match current depth.';
 
-    return `You are NeuroLearn, an AI tutor for CSE students.
-Topic: ${topicLabel}. Depth: ${depth}. Engagement: ${engScore}/100. ${engNote}
-Rules: Under 160 words. Use code blocks. Be direct. End with one question.`;
+    return `You are NeuroLearn, a sharp and concise AI tutor for Computer Science Engineering students.
+Current topic: ${topicLabel}.
+Explanation depth: ${depth}.
+Neuromorphic engagement score: ${engScore}/100.
+${engNote}
+
+Rules:
+- Under 160 words unless showing code.
+- Use triple backtick code blocks with a language tag (e.g. \`\`\`python).
+- Be direct. No filler phrases like "Great question!".
+- End every response with one short question or insight prompt.
+- If engagement is low, simplify. If high, add technical depth.`;
   }
 
   async function call(messages, topicLabel, depth) {
+    if (!hasKey()) throw new Error('NO_KEY');
+
     const engScore = STDPEngine.getScore();
     const systemText = buildSystem(topicLabel, depth, engScore);
+
+    // Convert history for the SDK format
     const geminiMessages = messages.map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }]
     }));
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+    try {
+      // CRITICAL FIX: Dynamically import the official SDK to bypass the REST block
+      const { GoogleGenAI } = await import('https://esm.run/@google/genai');
+      
+      // The SDK automatically knows how to authenticate an AQ. key
+      const ai = new GoogleGenAI({ apiKey: apiKey });
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemText }] },
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.5-flash',
         contents: geminiMessages.slice(-12),
-        generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
-      }),
-    });
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No response received.';
+        config: {
+          systemInstruction: systemText,
+          maxOutputTokens: 1000,
+          temperature: 0.7
+        }
+      });
+      
+      return response.text;
+      
+    } catch (err) {
+      throw new Error(err.message || 'SDK Error');
+    }
   }
 
-  return { call };
+  return { setKey, hasKey, call };
 })();
-
-
 /* ── 5. UI HELPERS ── */
 const UI = (() => {
   let msgId = 0, toastTimer;
