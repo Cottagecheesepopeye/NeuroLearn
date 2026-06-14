@@ -17,7 +17,7 @@ The project aims to create a learning environment that can adapt to a student's 
 [![Core Core](https://img.shields.io/badge/Core-Vanilla%20JS%20%26%20STDP%20Engine-blueviolet)]()
 
 ---
-## 🚀 Step-by-Step Installation & Local Setup
+##  Step-by-Step Installation & Local Setup
 
 Bring the project up in your local environment within 60 seconds:
 
