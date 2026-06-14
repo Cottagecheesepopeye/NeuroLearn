@@ -25,7 +25,24 @@ Bring the project up in your local environment within 60 seconds:
    ```bash
    git clone [https://github.com/Cottagecheesepopeye/Neuro_Learn.git](https://github.com/Cottagecheesepopeye/Neuro_Learn.git)
    cd Neuro_Learn
+Bring the project up in your local environment within 60 seconds:
 
+2. Add Environment Credentials to Vercel Dashboard:
+   If you are redeploying to your own cloud instance, simply add the following environment variable token into your Vercel Project panel:
+
+   Key: GROQ_API_KEY
+
+   Value: gsk_your_private_groq_key_here
+
+3. Launch the Live Environment Locally:
+   Open the codebase via your local text editor environment (e.g., VS Code) and host via a standard static loop tool like Live Server.
+
+4. Local Testing Override Key:
+   To verify operations on a local machine loop (localhost) without accessing live global tokens, simply hit F12 on your screen and run this      command inside your browser console window:
+
+localStorage.setItem('NL_GROQ_KEY', 'gsk_YOUR_ACTUAL_GROQ_KEY_HERE');
+     ```
+   * Perform a **Hard Refresh (Ctrl + F5 / Cmd + Shift + R)**. Click "Start Learning", pick a subject, and watch the Llama 3.3 engine stream responses at blazing speed!
 ---
 
 ## The Problem We Are Solving
