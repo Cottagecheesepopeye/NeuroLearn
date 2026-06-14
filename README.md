@@ -194,7 +194,7 @@ Future enhancements may include:
 
 ---
 
-## Team
+## Team No-Brainers
 
 Developed as a collaborative hackathon project with the vision of making learning more personalized, inclusive, and emotionally intelligent.
 ---
