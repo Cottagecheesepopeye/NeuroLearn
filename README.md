@@ -64,6 +64,8 @@ NeuroLearn acts as an intelligent study companion that adapts its support based 
 
 The platform continuously interacts with learners and responds to their learning behavior. Based on the learner's needs, NeuroLearn provides personalized guidance, adaptive explanations, and encouragement to make studying more effective and enjoyable.
 
+<img width="1600" height="906" alt="image" src="https://github.com/user-attachments/assets/64f03312-6e46-4d88-aae4-b0872f520635" />
+
 ---
 
 ### Example Scenarios
